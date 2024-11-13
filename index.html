@@ -14,6 +14,8 @@
             border-radius: 8px;
             box-shadow: 0 2px 4px rgba(0,0,0,0.1);
             padding: 20px;
+            max-width: 1200px;
+            margin: 0 auto;
         }
         table {
             width: 100%;
@@ -22,12 +24,15 @@
         }
         th, td {
             padding: 12px;
-            text-align: center;
+            text-align: left;
             border-bottom: 1px solid #ddd;
         }
         th {
             background-color: #1a73e8;
             color: white;
+        }
+        tr:hover {
+            background-color: #f5f5f5;
         }
         .status {
             padding: 6px 12px;
@@ -35,6 +40,7 @@
             font-weight: bold;
             display: inline-block;
             min-width: 100px;
+            text-align: center;
         }
         .cancelado {
             background-color: #ff4444;
@@ -44,17 +50,29 @@
             background-color: #ffd700;
             color: black;
         }
+        .finalizado {
+            background-color: #4CAF50;
+            color: white;
+        }
         #lastUpdate {
             color: #666;
             margin-bottom: 10px;
         }
         h1 {
             text-align: center;
+            color: #1a73e8;
+            margin-bottom: 20px;
         }
         #updateCounter {
             color: #666;
             text-align: right;
             margin-top: 10px;
+        }
+        .loading {
+            text-align: center;
+            padding: 20px;
+            font-style: italic;
+            color: #666;
         }
     </style>
 </head>
@@ -74,6 +92,9 @@
                 </tr>
             </thead>
             <tbody id="dataTable">
+                <tr>
+                    <td colspan="6" class="loading">Carregando dados...</td>
+                </tr>
             </tbody>
         </table>
         <div id="updateCounter">Próxima atualização em: <span id="countdown">10</span> segundos</div>
@@ -85,22 +106,63 @@
 
         function formatDate(dateStr) {
             if (!dateStr) return '-';
-            return new Date(dateStr).toLocaleString('pt-BR');
+            let date;
+            // Verifica se é um objeto Date serializado do Google Apps Script
+            if (typeof dateStr === 'string' && dateStr.includes('Date')) {
+                try {
+                    const timestamp = JSON.parse(dateStr.replace('new Date(', '').replace(')', ''));
+                    date = new Date(timestamp);
+                } catch (e) {
+                    date = new Date(dateStr);
+                }
+            } else {
+                date = new Date(dateStr);
+            }
+            
+            if (isNaN(date.getTime())) return dateStr;
+            
+            return date.toLocaleString('pt-BR', {
+                day: '2-digit',
+                month: '2-digit',
+                year: 'numeric',
+                hour: '2-digit',
+                minute: '2-digit'
+            });
+        }
+
+        function getStatusClass(status) {
+            status = status ? status.toLowerCase() : '';
+            switch(status) {
+                case 'cancelado':
+                    return 'cancelado';
+                case 'pendente':
+                    return 'pendente';
+                case 'finalizado':
+                    return 'finalizado';
+                default:
+                    return '';
+            }
         }
 
         function updateTable(data) {
             const tbody = document.getElementById('dataTable');
             tbody.innerHTML = '';
             
+            if (!data || data.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="6" class="loading">Nenhum dado encontrado</td></tr>';
+                return;
+            }
+            
             data.forEach(row => {
                 const tr = document.createElement('tr');
+                const statusClass = getStatusClass(row.status);
                 tr.innerHTML = `
                     <td>${formatDate(row.dataSolicitada)}</td>
-                    <td>${row.numeroPedido}</td>
+                    <td>${row.numeroPedido || '-'}</td>
                     <td>${formatDate(row.dataCorte)}</td>
-                    <td>${row.solicitante}</td>
+                    <td>${row.solicitante || '-'}</td>
                     <td>${formatDate(row.dataFinalizacao)}</td>
-                    <td><span class="status ${row.status.toLowerCase()}">${row.status}</span></td>
+                    <td><span class="status ${statusClass}">${row.status || '-'}</span></td>
                 `;
                 tbody.appendChild(tr);
             });
@@ -122,13 +184,22 @@
             fetch(WEBAPP_URL)
                 .then(response => response.json())
                 .then(data => {
-                    updateTable(data.data);
+                    if (data && data.data) {
+                        updateTable(data.data);
+                    } else {
+                        console.error('Formato de dados inválido:', data);
+                        document.getElementById('dataTable').innerHTML = 
+                            '<tr><td colspan="6" class="loading">Erro ao carregar dados</td></tr>';
+                    }
                 })
                 .catch(error => {
                     console.error('Erro ao buscar dados:', error);
+                    document.getElementById('dataTable').innerHTML = 
+                        '<tr><td colspan="6" class="loading">Erro ao carregar dados. Tentando novamente...</td></tr>';
                 });
         }
 
+        // Inicia o contador e busca os dados
         setInterval(updateCountdown, 1000);
         fetchSheetData();
     </script>
