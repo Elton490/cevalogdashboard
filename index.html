@@ -1,0 +1,136 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <title>Meu Painel de Solicitações</title>
+    <style>
+        body {
+            font-family: Arial;
+            margin: 20px;
+            background-color: #f0f2f5;
+        }
+        .dashboard {
+            background: white;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            padding: 20px;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 20px;
+        }
+        th, td {
+            padding: 12px;
+            text-align: center;
+            border-bottom: 1px solid #ddd;
+        }
+        th {
+            background-color: #1a73e8;
+            color: white;
+        }
+        .status {
+            padding: 6px 12px;
+            border-radius: 4px;
+            font-weight: bold;
+            display: inline-block;
+            min-width: 100px;
+        }
+        .cancelado {
+            background-color: #ff4444;
+            color: white;
+        }
+        .pendente {
+            background-color: #ffd700;
+            color: black;
+        }
+        #lastUpdate {
+            color: #666;
+            margin-bottom: 10px;
+        }
+        h1 {
+            text-align: center;
+        }
+        #updateCounter {
+            color: #666;
+            text-align: right;
+            margin-top: 10px;
+        }
+    </style>
+</head>
+<body>
+    <div class="dashboard">
+        <h1>Meu Painel de Solicitações</h1>
+        <div id="lastUpdate">Última atualização: <span id="updateTime"></span></div>
+        <table>
+            <thead>
+                <tr>
+                    <th>Data solicitada</th>
+                    <th>Nº do pedido</th>
+                    <th>Data e hora do corte</th>
+                    <th>Solicitante</th>
+                    <th>Data da finalização</th>
+                    <th>Status</th>
+                </tr>
+            </thead>
+            <tbody id="dataTable">
+            </tbody>
+        </table>
+        <div id="updateCounter">Próxima atualização em: <span id="countdown">10</span> segundos</div>
+    </div>
+
+    <script>
+        let countdown = 10;
+        const WEBAPP_URL = 'https://script.google.com/macros/s/AKfycbwPsP8XUpL2SI73fagy5PaldKkiPEv50fN-p0qSy3l33SHcbrfOIUvpaGHmI_p6TXQYCA/exec';
+
+        function formatDate(dateStr) {
+            if (!dateStr) return '-';
+            return new Date(dateStr).toLocaleString('pt-BR');
+        }
+
+        function updateTable(data) {
+            const tbody = document.getElementById('dataTable');
+            tbody.innerHTML = '';
+            
+            data.forEach(row => {
+                const tr = document.createElement('tr');
+                tr.innerHTML = `
+                    <td>${formatDate(row.dataSolicitada)}</td>
+                    <td>${row.numeroPedido}</td>
+                    <td>${formatDate(row.dataCorte)}</td>
+                    <td>${row.solicitante}</td>
+                    <td>${formatDate(row.dataFinalizacao)}</td>
+                    <td><span class="status ${row.status.toLowerCase()}">${row.status}</span></td>
+                `;
+                tbody.appendChild(tr);
+            });
+
+            document.getElementById('updateTime').textContent = new Date().toLocaleString('pt-BR');
+        }
+
+        function updateCountdown() {
+            document.getElementById('countdown').textContent = countdown;
+            countdown--;
+            
+            if (countdown < 0) {
+                countdown = 10;
+                fetchSheetData();
+            }
+        }
+
+        function fetchSheetData() {
+            fetch(WEBAPP_URL)
+                .then(response => response.json())
+                .then(data => {
+                    updateTable(data.data);
+                })
+                .catch(error => {
+                    console.error('Erro ao buscar dados:', error);
+                });
+        }
+
+        setInterval(updateCountdown, 1000);
+        fetchSheetData();
+    </script>
+</body>
+</html>
