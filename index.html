@@ -1,120 +1,115 @@
 <!DOCTYPE html>
 <html>
 <head>
-    <title>Dashboard Dinâmico</title>
+    <title>PAINEL DE PRIORIDADES</title>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
     <style>
+        /* Estilos básicos e de layout */
         * {
             box-sizing: border-box;
             margin: 0;
             padding: 0;
         }
-
         body {
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            line-height: 1.6;
             background-color: #f5f5f5;
-            padding: 20px;
+            padding: 2vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            height: 100vh;
         }
-
         .dashboard {
+            width: 100vw;
+            height: 90vh;
             max-width: 1400px;
-            margin: 0 auto;
             background: white;
-            padding: 20px;
+            padding: 1vh 2vw;
             border-radius: 8px;
-            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+            overflow-y: auto;
         }
-
         .dashboard-header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 20px;
-            flex-wrap: wrap;
-            gap: 10px;
+            text-align: center;
+            margin-bottom: 2vh;
+            font-weight: bold;
+            font-size: 2.5vh;
+            color: black;
         }
-
-        .controls {
-            display: flex;
-            gap: 10px;
-            flex-wrap: wrap;
-        }
-
-        .refresh-btn {
-            padding: 8px 16px;
-            background-color: #4CAF50;
+        .status-pendente {
+            background-color: #FF9800;
             color: white;
-            border: none;
+            font-weight: bold;
+            padding: 5px;
             border-radius: 4px;
-            cursor: pointer;
-            display: flex;
-            align-items: center;
-            gap: 5px;
-            transition: background-color 0.3s;
         }
-
-        .refresh-btn:hover {
-            background-color: #45a049;
-        }
-
-        .refresh-btn i {
-            font-size: 14px;
-        }
-
-        .search-box {
-            padding: 8px;
-            border: 1px solid #ddd;
+        .status-cancelado {
+            background-color: #312f2f;
+            color: white;
+            font-weight: bold;
+            padding: 5px;
             border-radius: 4px;
-            width: 200px;
         }
-
+        .status-finalizado {
+            background-color: #2e8a37;
+            color: white;
+            font-weight: bold;
+            padding: 5px;
+            border-radius: 4px;
+        }
+        .status-atrasado {
+            background-color: #d9534f;
+            color: white;
+            font-weight: bold;
+            padding: 5px;
+            border-radius: 4px;
+        }
         .table-container {
-            overflow-x: auto;
-            margin-top: 20px;
+            overflow-y: auto;
+            max-height: 70vh;
+            width: 100%;
         }
-
         table {
             width: 100%;
             border-collapse: collapse;
-            background: white;
+            font-size: 1.8vh;
         }
-
         th, td {
-            padding: 12px;
-            text-align: left;
+            padding: 1vh;
+            text-align: center;
             border-bottom: 1px solid #ddd;
         }
-
         th {
-            background-color: #f8f9fa;
+            background-color: #003366;
+            color: white;
             font-weight: 600;
-            cursor: pointer;
         }
-
-        th:hover {
-            background-color: #e9ecef;
+        /* Animação de piscada para linhas atrasadas */
+        @keyframes blink {
+            0% { background-color: rgba(255, 0, 0, 0.1); }
+            50% { background-color: white; }
+            100% { background-color: rgba(255, 0, 0, 0.1); }
         }
-
+        tr.atrasado {
+            animation: blink 1.5s infinite;
+        }
         tr:hover {
             background-color: #f8f9fa;
         }
-
         .loading {
             position: fixed;
             top: 0;
             left: 0;
             width: 100%;
             height: 100%;
-            background: rgba(255,255,255,0.8);
-            display: flex;
+            background: rgba(255, 255, 255, 0.8);
+            display: none;
             justify-content: center;
             align-items: center;
             z-index: 1000;
         }
-
         .loading-spinner {
             border: 4px solid #f3f3f3;
             border-top: 4px solid #4CAF50;
@@ -123,129 +118,50 @@
             height: 40px;
             animation: spin 1s linear infinite;
         }
-
         @keyframes spin {
             0% { transform: rotate(0deg); }
             100% { transform: rotate(360deg); }
         }
-
-        .status {
-            padding: 10px;
-            margin: 10px 0;
-            border-radius: 4px;
-            display: none;
-        }
-
-        .status.error {
-            background-color: #ffebee;
-            color: #c62828;
-            border: 1px solid #ffcdd2;
-        }
-
-        .status.success {
-            background-color: #e8f5e9;
-            color: #2e7d32;
-            border: 1px solid #c8e6c9;
-        }
-
-        .pagination {
-            display: flex;
-            justify-content: center;
-            gap: 10px;
-            margin-top: 20px;
-        }
-
-        .pagination button {
-            padding: 8px 12px;
-            border: 1px solid #ddd;
-            background: white;
-            cursor: pointer;
-            border-radius: 4px;
-        }
-
-        .pagination button:hover {
-            background-color: #f8f9fa;
-        }
-
-        .pagination button.active {
-            background-color: #4CAF50;
-            color: white;
-            border-color: #4CAF50;
-        }
-
-        @media (max-width: 768px) {
-            .dashboard-header {
-                flex-direction: column;
-                align-items: stretch;
-            }
-            
-            .controls {
-                flex-direction: column;
-            }
-
-            .search-box {
-                width: 100%;
-            }
+        #lastUpdate, #nextUpdate {
+            font-size: 1.5vh;
+            color: #666;
+            margin: 1vh 0;
+            text-align: left;
         }
     </style>
 </head>
 <body>
     <div class="dashboard">
         <div class="dashboard-header">
-            <h1>Dashboard de Dados</h1>
-            <div class="controls">
-                <input type="text" class="search-box" placeholder="Buscar..." id="searchInput">
-                <button class="refresh-btn" onclick="fetchData()">
-                    <i class="fas fa-sync-alt"></i> Atualizar Dados
-                </button>
-            </div>
+            <h1>PRIORIDADES</h1>
         </div>
-
+        <div id="lastUpdate"></div>
+        <div id="nextUpdate"></div>
         <div id="status" class="status"></div>
         <div class="table-container" id="tableContainer"></div>
-        <div class="pagination" id="pagination"></div>
     </div>
-
-    <div id="loading" class="loading" style="display: none;">
+    <div id="loading" class="loading">
         <div class="loading-spinner"></div>
     </div>
 
     <script>
         const API_URL = 'https://script.google.com/macros/s/AKfycbwG_4QWkBGH1g2tfSNVmViLNncHFln4RDuoUYRihmnRLJ7a1-axEtRxOlfAFhVdMGQ4/exec';
         let allData = [];
-        let currentData = [];
-        let currentSort = { column: null, direction: 'asc' };
-        const itemsPerPage = 10;
-        let currentPage = 1;
 
-        // Função para mostrar/esconder o loading
         function toggleLoading(show) {
             document.getElementById('loading').style.display = show ? 'flex' : 'none';
         }
 
-        // Função para mostrar mensagens de status
-        function showStatus(message, type) {
-            const statusDiv = document.getElementById('status');
-            statusDiv.textContent = message;
-            statusDiv.className = `status ${type}`;
-            statusDiv.style.display = 'block';
-            setTimeout(() => {
-                statusDiv.style.display = 'none';
-            }, 3000);
-        }
-
-        // Buscar dados da API
         async function fetchData() {
             toggleLoading(true);
             try {
                 const response = await fetch(API_URL);
                 const result = await response.json();
-                
-                if (result.status === 'success') {
+
+                if (result.status === 'success' && result.data) {
                     allData = result.data;
-                    currentData = [...allData];
-                    showStatus('Dados atualizados com sucesso!', 'success');
-                    applyFilters();
+                    displayData();
+                    updateLastUpdate();
                 } else {
                     throw new Error(result.message || 'Erro ao carregar dados');
                 }
@@ -257,133 +173,78 @@
             }
         }
 
-        // Função para ordenar dados
-        function sortData(column) {
-            const direction = currentSort.column === column && currentSort.direction === 'asc' ? 'desc' : 'asc';
-            currentSort = { column, direction };
-
-            currentData.sort((a, b) => {
-                let compareA = a[column];
-                let compareB = b[column];
-
-                // Converter para número se possível
-                if (!isNaN(compareA) && !isNaN(compareB)) {
-                    compareA = Number(compareA);
-                    compareB = Number(compareB);
-                }
-
-                if (compareA < compareB) return direction === 'asc' ? -1 : 1;
-                if (compareA > compareB) return direction === 'asc' ? 1 : -1;
-                return 0;
-            });
-
-            displayData();
-        }
-
-        // Função para filtrar dados
-        function applyFilters() {
-            const searchTerm = document.getElementById('searchInput').value.toLowerCase();
-            
-            currentData = allData.filter(row => {
-                return Object.values(row).some(value => 
-                    String(value).toLowerCase().includes(searchTerm)
-                );
-            });
-
-            currentPage = 1;
-            displayData();
-        }
-
-        // Função para criar a paginação
-        function createPagination() {
-            const totalPages = Math.ceil(currentData.length / itemsPerPage);
-            const paginationDiv = document.getElementById('pagination');
-            paginationDiv.innerHTML = '';
-
-            // Botão anterior
-            const prevButton = document.createElement('button');
-            prevButton.innerHTML = '&laquo;';
-            prevButton.onclick = () => {
-                if (currentPage > 1) {
-                    currentPage--;
-                    displayData();
-                }
-            };
-            paginationDiv.appendChild(prevButton);
-
-            // Páginas
-            for (let i = 1; i <= totalPages; i++) {
-                const button = document.createElement('button');
-                button.textContent = i;
-                button.classList.toggle('active', i === currentPage);
-                button.onclick = () => {
-                    currentPage = i;
-                    displayData();
-                };
-                paginationDiv.appendChild(button);
-            }
-
-            // Botão próximo
-            const nextButton = document.createElement('button');
-            nextButton.innerHTML = '&raquo;';
-            nextButton.onclick = () => {
-                if (currentPage < totalPages) {
-                    currentPage++;
-                    displayData();
-                }
-            };
-            paginationDiv.appendChild(nextButton);
-        }
-
-        // Função para exibir os dados
         function displayData() {
-            if (!currentData.length) {
+            if (!allData || allData.length === 0) {
                 document.getElementById('tableContainer').innerHTML = '<p>Nenhum dado encontrado</p>';
-                document.getElementById('pagination').innerHTML = '';
                 return;
             }
 
-            const start = (currentPage - 1) * itemsPerPage;
-            const end = start + itemsPerPage;
-            const pageData = currentData.slice(start, end);
-            const headers = Object.keys(currentData[0]);
+            const columnsToDisplay = [
+                'Data solicitada',
+                'Nº da delivery',
+                'Data e hora do corte',
+                'Solicitante',
+                'Status',
+                'Motivo de cancelamento'
+            ];
 
-            let tableHtml = '<table>';
-            
-            // Cabeçalho
-            tableHtml += '<tr>';
-            headers.forEach(header => {
-                const sortIcon = currentSort.column === header 
-                    ? `<i class="fas fa-sort-${currentSort.direction === 'asc' ? 'up' : 'down'}"></i>`
-                    : '<i class="fas fa-sort"></i>';
-                    
-                tableHtml += `
-                    <th onclick="sortData('${header}')">
-                        ${header} ${sortIcon}
-                    </th>`;
-            });
+            const now = new Date();
+            const todayDate = now.toLocaleDateString('pt-BR');
+
+            let tableHtml = '<table><tr>';
+            columnsToDisplay.forEach(col => tableHtml += `<th>${col}</th>`);
             tableHtml += '</tr>';
 
-            // Dados
-            pageData.forEach(row => {
-                tableHtml += '<tr>';
-                headers.forEach(header => {
-                    tableHtml += `<td>${row[header]}</td>`;
+            allData.forEach(row => {
+                if (row['Status'] === 'FINALIZADO') return;
+
+                const corteDate = new Date(row['Data e hora do corte']);
+                const corteDateFormatted = corteDate.toLocaleDateString('pt-BR');
+                let rowClass = '';
+
+                if (row['Status'] === 'CANCELADO' && corteDateFormatted !== todayDate) return;
+
+                if (now > corteDate && row['Status'] === 'PENDENTE') {
+                    row['Status'] = 'ATRASADO';
+                    rowClass = 'atrasado';
+                }
+
+                tableHtml += `<tr class="${rowClass}">`;
+                columnsToDisplay.forEach(col => {
+                    let cellValue = row[col] || '';
+
+                    if (col.includes("Data") && cellValue) {
+                        let date = new Date(cellValue);
+                        cellValue = date.toLocaleDateString('pt-BR') + ' - ' + date.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' });
+                    }
+
+                    if (col === 'Status') {
+                        const statusClass = {
+                            'PENDENTE': 'status-pendente',
+                            'CANCELADO': 'status-cancelado',
+                            'FINALIZADO': 'status-finalizado',
+                            'ATRASADO': 'status-atrasado'
+                        }[cellValue] || '';
+
+                        tableHtml += `<td class="${statusClass}">${cellValue}</td>`;
+                    } else {
+                        tableHtml += `<td>${cellValue}</td>`;
+                    }
                 });
                 tableHtml += '</tr>';
             });
 
             tableHtml += '</table>';
-
             document.getElementById('tableContainer').innerHTML = tableHtml;
-            createPagination();
         }
 
-        // Event listeners
-        document.getElementById('searchInput').addEventListener('input', applyFilters);
+        function updateLastUpdate() {
+            const now = new Date();
+            document.getElementById('lastUpdate').textContent = `Última atualização: ${now.toLocaleDateString('pt-BR')} - ${now.toLocaleTimeString('pt-BR')}`;
+        }
 
-        // Carregar dados iniciais
         fetchData();
+        setInterval(fetchData, 30000);
     </script>
 </body>
 </html>
